@@ -55,6 +55,20 @@ resource "null_resource" "wireguard" {
     content = "${element(data.template_file.interface-conf.*.rendered, count.index)}"
     destination = "/etc/wireguard/${var.vpn_interface}.conf"
   }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod 700 /etc/wireguard/${var.vpn_interface}.conf",
+    ]
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "${join("\n", formatlist("echo '%s %s' >> /etc/hosts", data.template_file.vpn_ips.*.rendered, var.hostnames))}",
+      "systemctl is-enabled wg-quick@${var.vpn_interface} || systemctl enable wg-quick@${var.vpn_interface}",
+      "systemctl restart wg-quick@${var.vpn_interface}",
+    ]
+  }
 }
 
 data "external" "keys" {
