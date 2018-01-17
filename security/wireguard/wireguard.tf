@@ -4,7 +4,7 @@ variable "connections" {
   type = "list"
 }
 
-variable "private-ips" {
+variable "private_ips" {
   type = "list"
 }
 
