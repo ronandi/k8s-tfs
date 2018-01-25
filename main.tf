@@ -51,4 +51,5 @@ module "swap" {
 
   count       = "${var.hosts}"
   connections = "${module.provider.public_ips}"
+}
 
