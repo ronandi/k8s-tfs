@@ -4,6 +4,10 @@ variable "connections" {
   type = "list"
 }
 
+variable "kubernetes_interface" {
+  type = "string"
+}
+
 variable "private_interface" {
   type = "string"
 }
@@ -15,10 +19,6 @@ variable "vpn_interface" {
 variable "vpn_port" {
   type = "string"
 }
-
-//variable "kubernetes_interface" {
-//  type = "string"
-//}
 
 resource "null_resource" "firewall" {
   count = "${var.count}"
@@ -45,6 +45,7 @@ data "template_file" "ufw" {
 
   vars {
     private_interface    = "${var.private_interface}"
+    kubernetes_interface = "${var.kubernetes_interface}"
     vpn_interface        = "${var.vpn_interface}"
     vpn_port             = "${var.vpn_port}"
   }
