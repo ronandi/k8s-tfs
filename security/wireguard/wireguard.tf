@@ -8,20 +8,20 @@ variable "private_ips" {
   type = "list"
 }
 
-variable "hostnames" {
-  type = "list"
-}
-
-variable "vpn_ip_range" {
-  default = "10.0.1.0/24"
+variable "vpn_interface" {
+  default = "wg0"
 }
 
 variable "vpn_port" {
   default = "51820"
 }
 
-variable "vpn_interface" {
-  default = "wg0"
+variable "hostnames" {
+  type = "list"
+}
+
+variable "vpn_iprange" {
+  default = "10.0.1.0/24"
 }
 
 resource "null_resource" "wireguard" {
@@ -32,8 +32,8 @@ resource "null_resource" "wireguard" {
   }
 
   connection {
-    host = "${element(var.connections, count.index)}"
-    user = "root"
+    host  = "${element(var.connections, count.index)}"
+    user  = "root"
     agent = true
   }
 
@@ -52,7 +52,7 @@ resource "null_resource" "wireguard" {
   }
 
   provisioner "file" {
-    content = "${element(data.template_file.interface-conf.*.rendered, count.index)}"
+    content     = "${element(data.template_file.interface-conf.*.rendered, count.index)}"
     destination = "/etc/wireguard/${var.vpn_interface}.conf"
   }
 
@@ -71,27 +71,13 @@ resource "null_resource" "wireguard" {
   }
 }
 
-data "external" "keys" {
-  count = "${var.count}"
-  program = ["sh", "${path.module}/scripts/gen_keys.sh"]
-}
-
-data "template_file" "vpn_ips" {
-  count = "${var.count}"
-  template = "$${ip}"
-
-  vars {
-    ip = "${cidrhost(var.vpn_ip_range, count.index + 1)}"
-  }
-}
-
 data "template_file" "interface-conf" {
-  count = "${var.count}"
+  count    = "${var.count}"
   template = "${file("${path.module}/templates/interface.conf")}"
 
   vars {
-    address = "${element(data.template_file.vpn_ips.*.rendered, count.index)}"
-    port = "${var.vpn_port}"
+    address     = "${element(data.template_file.vpn_ips.*.rendered, count.index)}"
+    port        = "${var.vpn_port}"
     private_key = "${element(data.external.keys.*.result.private_key, count.index)}"
     peers       = "${replace(join("\n", data.template_file.peer-conf.*.rendered), element(data.template_file.peer-conf.*.rendered, count.index), "")}"
   }
@@ -106,6 +92,21 @@ data "template_file" "peer-conf" {
     port        = "${var.vpn_port}"
     public_key  = "${element(data.external.keys.*.result.public_key, count.index)}"
     allowed_ips = "${element(data.template_file.vpn_ips.*.rendered, count.index)}/32"
+  }
+}
+
+data "external" "keys" {
+  count = "${var.count}"
+
+  program = ["sh", "${path.module}/scripts/gen_keys.sh"]
+}
+
+data "template_file" "vpn_ips" {
+  count    = "${var.count}"
+  template = "$${ip}"
+
+  vars {
+    ip = "${cidrhost(var.vpn_iprange, count.index + 1)}"
   }
 }
 

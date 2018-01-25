@@ -16,5 +16,5 @@ variable "digitalocean_ssh_keys" {
 }
 
 variable "digitalocean_token" {
-  default = ""
+  default = "153076eac53e48f5290256f86f03c99eccd04adf425684ffbfdf57e3d7ce222e"
 }
